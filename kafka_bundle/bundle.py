@@ -1,5 +1,5 @@
 import logging
-from applauncher.kernel import Configuration, Kernel, ConfigurationReadyEvent
+from applauncher.kernel import Configuration, Kernel, ConfigurationReadyEvent, KernelShutdownEvent, InjectorReadyEvent
 import inject
 from confluent_kafka import Producer, Consumer
 
@@ -9,15 +9,45 @@ class KafkaException(Exception):
 def delivery_callback(err, msg):
     if err:
         raise KafkaException(err)
-    print(msg)
 
 class KafkaManager(object):
     def __init__(self, config):
         self.config = config
         self.default_producer = self.get_producer()
+        self.kernel = None
+        self.run = True
 
-    def produce(self, topic, message, wait=False):
+    def produce(self, topic, message, flush=False):
         self.default_producer.produce(topic, message, callback=delivery_callback)
+        if flush:
+            self.default_producer.flush()
+
+    def subscribe(self, topics, group_id, consumer_callback, poll_timeout=1):
+        self.kernel.run_service(
+            self._subscribe_service,
+            topics,
+            group_id,
+            consumer_callback,
+            poll_timeout
+        )
+
+    def _subscribe_service(self, topics, group_id, consumer_callback, poll_timeout):
+        consumer = self.get_consumer(group_id=group_id)  # type: Consumer
+        consumer.subscribe(topics=topics)
+        logging.info("Subscribed to {topics}".format(topics=",".join(topics)))
+        while self.run:
+            msg = consumer.poll(timeout=poll_timeout)
+            if msg is None:
+                continue
+
+            if msg.error():
+                error = msg.error()
+                raise KafkaException("Error {error_code}: {error}".format(error_code=error.code(), error=str(error)))
+
+            try:
+                consumer_callback(msg)
+            except Exception as e:
+                logging.error("Consumer error", str(e))
 
     def get_producer(self):
         return Producer(**self.config)
@@ -38,6 +68,7 @@ def applauncher_config_to_confluent(config):
             c[k] = v
     return c
 
+
 class KafkaBundle(object):
     def __init__(self):
         self.logger = logging.getLogger("kafka")
@@ -56,10 +87,21 @@ class KafkaBundle(object):
 
         self.event_listeners = [
             (ConfigurationReadyEvent, self.config_ready),
+            (InjectorReadyEvent, self.injector_ready),
+            (KernelShutdownEvent, self.shutdown),
         ]
 
         self.injection_bindings = {}
 
+    @inject.params(kernel=Kernel, kafka=KafkaManager)
+    def injector_ready(self, event, kernel, kafka):
+        kafka.kernel = kernel
+
     def config_ready(self, event):
         kafka_config = applauncher_config_to_confluent(event.configuration.kafka)
         self.injection_bindings[KafkaManager] = KafkaManager(kafka_config)
+
+    @inject.params(kafka=KafkaManager)
+    def shutdown(self, event, kafka: KafkaManager):
+        kafka.run = False
+        kafka.default_producer.flush()

@@ -1,1 +1,2 @@
+applauncher
 confluent_kafka==1.0.0
