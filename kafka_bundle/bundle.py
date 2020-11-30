@@ -66,6 +66,15 @@ def applauncher_config_to_confluent(config):
             c[k] = applauncher_config_to_confluent(v)
         else:
             c[k] = v
+    if "bootstrap.servers" in c:
+        if c["bootstrap.servers"].startswith("sasl://"):
+            # sasl://username:password@servers
+            credentials, servers = c["bootstrap.servers"][7:].split("@")
+            username, password = credentials.split(":")
+            c["bootstrap.servers"] = servers
+            c["sasl.username"] = username
+            c["sasl.password"] = password
+
     return c
 
 
@@ -79,9 +88,8 @@ class KafkaBundle(object):
                 'default_topic_config': {'auto_offset_reset': 'smallest'},
                 'security_protocol': 'SASL_SSL',
                 'sasl_mechanisms': 'SCRAM-SHA-256',
-                'sasl_username': None,
-                'sasl_password': None
-
+                'sasl_username': '',
+                'sasl_password': ''
             }
         }
 
