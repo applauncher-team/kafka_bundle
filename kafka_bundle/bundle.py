@@ -17,8 +17,8 @@ class KafkaManager(object):
         self.kernel = None
         self.run = True
 
-    def produce(self, topic, message, flush=False):
-        self.default_producer.produce(topic, message, callback=delivery_callback)
+    def produce(self, topic, message, headers=None, flush=False):
+        self.default_producer.produce(topic, message, headers=headers, callback=delivery_callback)
         if flush:
             self.default_producer.flush()
 
