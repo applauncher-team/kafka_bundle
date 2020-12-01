@@ -36,18 +36,22 @@ class KafkaManager(object):
         consumer.subscribe(topics=topics)
         logging.info("Subscribed to {topics}".format(topics=",".join(topics)))
         while self.run:
-            msg = consumer.poll(timeout=poll_timeout)
-            if msg is None:
-                continue
-
-            if msg.error():
-                error = msg.error()
-                raise KafkaException("Error {error_code}: {error}".format(error_code=error.code(), error=str(error)))
-
             try:
-                consumer_callback(msg)
+                msg = consumer.poll(timeout=poll_timeout)
+                if msg is None:
+                    continue
+
+                if msg.error():
+                    error = msg.error()
+                    raise KafkaException("Error {error_code}: {error}".format(error_code=error.code(), error=str(error)))
+
+                try:
+                    consumer_callback(msg)
+                except Exception as e:
+                    logging.error(f"Consumer error {str(e)}")
             except Exception as e:
-                logging.error("Consumer error", str(e))
+                logging.error(str(e))
+
 
     def get_producer(self):
         return Producer(**self.config)
