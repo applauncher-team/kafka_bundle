@@ -92,6 +92,7 @@ class KafkaBundle(object):
                 'default_topic_config': {'auto_offset_reset': 'smallest'},
                 'security_protocol': 'SASL_SSL',
                 'sasl_mechanisms': 'SCRAM-SHA-256',
+                'partition_assignment_strategy': 'roundrobin',
                 'sasl_username': '',
                 'sasl_password': ''
             }
