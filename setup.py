@@ -6,7 +6,7 @@ with open('requirements.txt') as fp:
 setup(
   name='kafka_bundle',
   packages=['kafka_bundle'],
-  version='1.4',
+  version='1.5',
   description='Kafka support for applauncher',
   author='Alvaro Garcia Gomez',
   author_email='maxpowel@gmail.com',

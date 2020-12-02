@@ -89,7 +89,7 @@ class KafkaBundle(object):
             "kafka": {
                 'bootstrap_servers': None,
                 'session_timeout_ms': 6000,
-                'default_topic_config': {'auto_offset_reset': 'smallest'},
+                'default_topic_config': {'auto_offset_reset': 'earliest'},
                 'security_protocol': 'SASL_SSL',
                 'sasl_mechanisms': 'SCRAM-SHA-256',
                 'partition_assignment_strategy': 'roundrobin',
