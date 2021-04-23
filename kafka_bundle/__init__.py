@@ -1,1 +1,1 @@
-from .bundle import KafkaManager, KafkaBundle
+from .bundle import KafkaBundle, consumer_reader, KafkaContainer
