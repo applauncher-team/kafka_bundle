@@ -1,9 +1,9 @@
 import logging
-from applauncher.event import ConfigurationReadyEvent, InjectorReadyEvent, KernelShutdownEvent
 from pydantic import BaseModel
 from dependency_injector import containers, providers
 from applauncher.applauncher import Configuration
 from confluent_kafka import Producer, Consumer
+
 
 def consumer_reader(consumer):
     while True:
@@ -21,9 +21,9 @@ def consumer_reader(consumer):
             print(e)
 
 
-
 class KafkaDefaultTopicConfig(BaseModel):
     auto_offset_reset: str = 'earliest'
+
 
 class KafkaConfig(BaseModel):
     bootstrap_servers: str
@@ -59,13 +59,16 @@ def applauncher_config_to_confluent(config):
 
     return c
 
+
 class KafkaConsumer(Consumer):
     def __init__(self, config):
         super(KafkaConsumer, self).__init__(**applauncher_config_to_confluent(config))
 
+
 class KafkaProducer(Producer):
     def __init__(self, config):
         super(KafkaProducer, self).__init__(**applauncher_config_to_confluent(config))
+
 
 class KafkaContainer(containers.DeclarativeContainer):
     config = providers.Dependency(instance_of=KafkaConfig)
@@ -80,9 +83,10 @@ class KafkaContainer(containers.DeclarativeContainer):
         config=configuration.provided.kafka
     )
 
+
 class KafkaBundle(object):
     def __init__(self):
         self.logger = logging.getLogger("kafka")
-        self.config_mapping = {
-            "kafka": KafkaConfig
-        }
+        self.config_mapping = {"kafka": KafkaConfig}
+        self.injection_bindings = {"kafka", KafkaContainer}
+
