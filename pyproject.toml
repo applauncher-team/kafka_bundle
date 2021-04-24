@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kafka_bundle"
-version = "2.0.1"
+version = "2.0.2"
 description = ""
 authors = ["Alvaro Garcia <maxpowel@gmail.com>"]
 

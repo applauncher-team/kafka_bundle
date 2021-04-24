@@ -88,5 +88,5 @@ class KafkaBundle(object):
     def __init__(self):
         self.logger = logging.getLogger("kafka")
         self.config_mapping = {"kafka": KafkaConfig}
-        self.injection_bindings = {"kafka", KafkaContainer}
+        self.injection_bindings = {"kafka": KafkaContainer}
 
