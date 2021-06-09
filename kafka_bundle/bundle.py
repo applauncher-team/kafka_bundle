@@ -60,6 +60,15 @@ def applauncher_config_to_confluent(config):
     return c
 
 
+def producer_config(config):
+    """Filter the producer config"""
+    for field in ["group.id", "partition.assignment.strategy", "session.timeout.ms", "default.topic.config"]:
+        if field in config:
+            del config[field]
+
+    return config
+
+
 class KafkaConsumer(Consumer):
     def __init__(self, config):
         super(KafkaConsumer, self).__init__(**applauncher_config_to_confluent(config))
@@ -67,7 +76,7 @@ class KafkaConsumer(Consumer):
 
 class KafkaProducer(Producer):
     def __init__(self, config):
-        super(KafkaProducer, self).__init__(**applauncher_config_to_confluent(config))
+        super(KafkaProducer, self).__init__(**producer_config(applauncher_config_to_confluent(config)))
 
 
 class KafkaContainer(containers.DeclarativeContainer):
@@ -89,4 +98,3 @@ class KafkaBundle(object):
         self.logger = logging.getLogger("kafka")
         self.config_mapping = {"kafka": KafkaConfig}
         self.injection_bindings = {"kafka": KafkaContainer}
-
